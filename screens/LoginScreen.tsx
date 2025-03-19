@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { auth } from '../firebaseConfig';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from '@react-native-firebase/auth';
 import { RootStackParamList } from '../types';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
@@ -15,11 +15,13 @@ interface LoginScreenProps {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
+  const auth = getAuth();
+
   const handleRegister = async () => {
     try {
-      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       console.log('User registered:', userCredential.user);
-      navigation.navigate('TaskList'); // Navigate to the main app after registration
+      navigation.navigate('TaskList');
     } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
     }
@@ -27,9 +29,9 @@ interface LoginScreenProps {
 
   const handleLogin = async () => {
     try {
-      const userCredential = await auth().signInWithEmailAndPassword(email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log('User logged in:', userCredential.user);
-      navigation.navigate('TaskList'); // Navigate to the main app after login
+      navigation.navigate('TaskList');
     } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
     }

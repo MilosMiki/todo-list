@@ -4,6 +4,7 @@ export type Task = {
   category: string;
   dueDate: Date;
   reminderDate: Date;
+  created_by: string;
 };
 export type RootStackParamList = {
   Login: undefined;
