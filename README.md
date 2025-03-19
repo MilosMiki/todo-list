@@ -1,6 +1,3 @@
-# todo-list
-naloga 1 pri predmetu TZVA
-
 # Starting
 
 ### npx react-native start
