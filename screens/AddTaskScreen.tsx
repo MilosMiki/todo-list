@@ -3,6 +3,8 @@ import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, ScrollView
 import DatePicker from 'react-native-date-picker';
 import { Picker } from '@react-native-picker/picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 
 type Task = {
   name: string;
@@ -10,6 +12,7 @@ type Task = {
   category: string;
   dueDate: Date;
   reminderDate: Date;
+  created_by: string;
 };
 
 type RootStackParamList = {
@@ -40,7 +43,7 @@ const AddTaskScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
-  const addTask = () => {
+  const addTask = async () => {
     if (name.trim() === '') {
       setNameError('Task name cannot be empty.');
       return;
@@ -48,7 +51,23 @@ const AddTaskScreen: React.FC<Props> = ({ navigation, route }) => {
     setNameError('');
     setDueDateWarning('');
 
-    setTasks((prevTasks: Task[]) => [...prevTasks, { name, description, category, dueDate, reminderDate }]);
+    const user = auth().currentUser;
+    if (!user) {
+      console.error('No user logged in');
+      return;
+    }
+
+    const task = {
+      name,
+      description,
+      category,
+      dueDate,
+      reminderDate,
+      created_by: user.email,
+    };
+
+    await firestore().collection('tasks').add(task);
+
     navigation.goBack();
   };
 
@@ -67,7 +86,7 @@ const AddTaskScreen: React.FC<Props> = ({ navigation, route }) => {
           <Picker
             selectedValue={category}
             onValueChange={(value) => setCategory(value)}
-            style={[styles.picker, { color: 'black' }]} // Ensuring text is black
+            style={[styles.picker, { color: 'black' }]}
           >
             <Picker.Item label="Work" value="Work" />
             <Picker.Item label="School" value="School" />
