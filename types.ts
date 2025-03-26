@@ -12,3 +12,9 @@ export type RootStackParamList = {
   TaskDetails: { task: Task };
   AddTask: { setTasks: React.Dispatch<React.SetStateAction<Task[]>> };
 };
+
+export type TabParamList = {
+  Login: undefined;
+  TaskListTab: undefined;
+  Settings: undefined;
+};

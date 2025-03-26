@@ -5,6 +5,8 @@ import { Picker } from '@react-native-picker/picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import { categories } from '../App';
+import type { RootStackParamList } from '../types';
 
 type Task = {
   name: string;
@@ -13,12 +15,6 @@ type Task = {
   dueDate: Date;
   reminderDate: Date;
   created_by: string;
-};
-
-type RootStackParamList = {
-  TaskList: undefined;
-  TaskDetails: { task: Task };
-  AddTask: { setTasks: React.Dispatch<React.SetStateAction<Task[]>> };
 };
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddTask'>;
@@ -88,10 +84,9 @@ const AddTaskScreen: React.FC<Props> = ({ navigation, route }) => {
             onValueChange={(value) => setCategory(value)}
             style={[styles.picker, { color: 'black' }]}
           >
-            <Picker.Item label="Work" value="Work" />
-            <Picker.Item label="School" value="School" />
-            <Picker.Item label="Personal" value="Personal" />
-            <Picker.Item label="Shopping" value="Shopping" />
+            {categories.map((item) => (
+              <Picker.Item key={item} label={item} value={item} />
+            ))}
           </Picker>
         </View>
 
