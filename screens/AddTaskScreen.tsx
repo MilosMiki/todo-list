@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import DatePicker from 'react-native-date-picker';
 import { Picker } from '@react-native-picker/picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import { launchImageLibrary } from 'react-native-image-picker';
+import MlkitOcr from 'react-native-mlkit-ocr';
+import { categories } from '../App';
+import type { RootStackParamList } from '../types';
 
 type Task = {
   name: string;
@@ -13,12 +17,6 @@ type Task = {
   dueDate: Date;
   reminderDate: Date;
   created_by: string;
-};
-
-type RootStackParamList = {
-  TaskList: undefined;
-  TaskDetails: { task: Task };
-  AddTask: { setTasks: React.Dispatch<React.SetStateAction<Task[]>> };
 };
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddTask'>;
@@ -34,6 +32,7 @@ const AddTaskScreen: React.FC<Props> = ({ navigation, route }) => {
   const [showReminderPicker, setShowReminderPicker] = useState(false);
   const [nameError, setNameError] = useState('');
   const [dueDateWarning, setDueDateWarning] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleReminderDateChange = (date: Date) => {
     setReminderDate(date);
@@ -71,16 +70,70 @@ const AddTaskScreen: React.FC<Props> = ({ navigation, route }) => {
     navigation.goBack();
   };
 
+  const extractTextFromImage = async () => {
+    setIsProcessing(true);
+    try {
+      const result = await launchImageLibrary({
+        mediaType: 'photo',
+        quality: 0.8,
+      });
+
+      if (result.didCancel || !result.assets?.[0]?.uri) {
+        setIsProcessing(false);
+        return;
+      }
+
+      const imageUri = result.assets[0].uri;
+      const processed = await MlkitOcr.detectFromFile(imageUri);
+
+      let extractedDescription = '';
+
+      processed.forEach((block, index) => {
+        extractedDescription += block.text + '\n';
+      });
+
+      setDescription(extractedDescription.trim());
+    } catch (error) {
+      console.error('Text recognition error:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
         <Text style={styles.label}>Task Name:</Text>
-        <TextInput style={styles.input} value={name} onChangeText={setName} />
+        <TextInput 
+          style={styles.input} 
+          value={name} 
+          onChangeText={setName} 
+          placeholder="Enter task name"
+        />
         {nameError ? <Text style={styles.errorText}>{nameError}</Text> : null}
 
         <Text style={styles.label}>Description:</Text>
-        <TextInput style={styles.input} value={description} onChangeText={setDescription} multiline />
-
+        <View style={styles.nameInputContainer}>
+          <TextInput 
+            style={[styles.input, styles.multilineInput]} 
+            value={description} 
+            onChangeText={setDescription} 
+            multiline 
+            numberOfLines={4}
+            placeholder="Enter description or extract from image"
+          />
+          <TouchableOpacity 
+            style={styles.imageButton}
+            onPress={extractTextFromImage}
+            disabled={isProcessing}
+          >
+            {isProcessing ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={styles.imageButtonText}>📷</Text>
+            )}
+          </TouchableOpacity>
+        </View>
         <Text style={styles.label}>Category:</Text>
         <View style={styles.pickerContainer}>
           <Picker
@@ -88,10 +141,9 @@ const AddTaskScreen: React.FC<Props> = ({ navigation, route }) => {
             onValueChange={(value) => setCategory(value)}
             style={[styles.picker, { color: 'black' }]}
           >
-            <Picker.Item label="Work" value="Work" />
-            <Picker.Item label="School" value="School" />
-            <Picker.Item label="Personal" value="Personal" />
-            <Picker.Item label="Shopping" value="Shopping" />
+            {categories.map((item) => (
+              <Picker.Item key={item} label={item} value={item} />
+            ))}
           </Picker>
         </View>
 
@@ -145,6 +197,30 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
   label: { fontSize: 16, fontWeight: 'bold', marginTop: 10 },
   input: { borderWidth: 1, borderColor: '#ccc', padding: 8, marginBottom: 10, borderRadius: 5 },
+  nameInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    width: '100%',
+  },
+  multilineInput: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+    flex: 1,
+  },
+  imageButton: {
+    backgroundColor: '#4285F4',
+    padding: 10,
+    borderRadius: 5,
+    marginLeft: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 44,
+    minHeight: 44,
+  },
+  imageButtonText: {
+    color: 'white',
+    fontSize: 20,
+  },
   pickerContainer: { borderWidth: 1, borderColor: '#ccc', borderRadius: 5, marginBottom: 10, backgroundColor: '#f9f9f9' },
   picker: { height: 50, width: '100%' },
   dateInput: { borderWidth: 1, borderColor: '#ccc', padding: 8, borderRadius: 5, backgroundColor: '#f9f9f9', marginBottom: 10 },

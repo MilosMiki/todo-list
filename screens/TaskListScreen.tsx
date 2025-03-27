@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Button, StyleSheet, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { CompositeScreenProps } from '@react-navigation/native';
 import firestore from '@react-native-firebase/firestore';
 import { getAuth } from '@react-native-firebase/auth';
 import { Swipeable } from 'react-native-gesture-handler';
 import { RectButton } from 'react-native-gesture-handler';
+import type { TabParamList } from '../types';
 
 type Task = {
   id: string;
@@ -21,11 +24,39 @@ type RootStackParamList = {
   AddTask: { setTasks: React.Dispatch<React.SetStateAction<Task[]>> };
 };
 
-type Props = NativeStackScreenProps<RootStackParamList, 'TaskList'>;
+
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<TabParamList, 'TaskListTab'>,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
 const TaskListScreen: React.FC<Props> = ({ navigation }) => {
+
   const [tasks, setTasks] = useState<Task[]>([]);
-  
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => {
+        const auth = getAuth();
+        return (
+          <TouchableOpacity 
+            onPress={async () => {
+              try {
+                await auth.signOut();
+                navigation.navigate('Login');
+              } catch (error) {
+                console.error('Logout error:', error);
+              }
+            }}
+            style={styles.logoutButton}
+          >
+            <Text style={styles.logoutText}>Log out</Text>
+          </TouchableOpacity>
+        );
+      },
+    });
+  }, [navigation]);
+
   useEffect(() => {
     const auth = getAuth();
     const user = auth.currentUser;
@@ -83,7 +114,7 @@ const TaskListScreen: React.FC<Props> = ({ navigation }) => {
                   {
                     text: 'Delete',
                     style: 'destructive',
-                    onPress: () => deleteTask(task.id), // Delete the task
+                    onPress: () => deleteTask(task.id),
                   },
                 ],
                 { cancelable: true }
@@ -132,6 +163,17 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  logoutButton: {
+    backgroundColor: 'red',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+    marginRight: 10
+  },
+  logoutText: {
+    color: 'white',
+    fontWeight: 'bold'
   },
 });
 
