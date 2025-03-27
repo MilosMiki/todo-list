@@ -9,3 +9,8 @@ Allows communication between the host machine (Windows/PC) and the testing devic
 ### Android studio
 Open android studio and run app
 - Make sure USB install is allowed on the Android device!
+
+### Install
+adb install app-release.apk
+- run it from the project directory android/app/release in terminal
+- must uninstall build version of app due to signature
