@@ -5,10 +5,7 @@ import messaging from '@react-native-firebase/messaging';
 import { storage } from '../storage';
 import { categories } from '../App';
 
-// Define the available categories (topics)
-
 const SettingsScreen: React.FC = () => {
-  // subscriptions state: keys are category names, values indicate subscription status
   const [subscriptions, setSubscriptions] = useState<{ [key: string]: boolean }>({});
 
   // On mount, load saved subscription settings
@@ -34,11 +31,9 @@ const SettingsScreen: React.FC = () => {
 
     try {
       if (newStatus) {
-        // Subscribe to the topic
         await messaging().subscribeToTopic(category);
         console.log(`Subscribed to ${category}`);
       } else {
-        // Unsubscribe from the topic
         await messaging().unsubscribeFromTopic(category);
         console.log(`Unsubscribed from ${category}`);
       }

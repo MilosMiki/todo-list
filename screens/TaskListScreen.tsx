@@ -114,7 +114,7 @@ const TaskListScreen: React.FC<Props> = ({ navigation }) => {
                   {
                     text: 'Delete',
                     style: 'destructive',
-                    onPress: () => deleteTask(task.id), // Delete the task
+                    onPress: () => deleteTask(task.id),
                   },
                 ],
                 { cancelable: true }
